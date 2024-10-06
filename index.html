@@ -7,64 +7,121 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 50px;
             padding: 20px;
-            background-color: #f4f4f4;
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
+            background-color: #f4f4f4;
+            position: relative;
         }
         h1 {
             text-align: center;
             color: #333;
         }
+        .section {
+            margin-bottom: 50px;
+        }
         textarea {
             width: 100%;
-            height: 150px;
-            padding: 10px;
-            margin-bottom: 20px;
-            font-size: 16px;
-            border: 1px solid #ccc;
+            height: 100px;
+            margin-top: 10px;
         }
         button {
             padding: 10px 20px;
-            background-color: #2844a7;
+            margin-top: 10px;
+            background-color: #007bff;
             color: white;
             border: none;
             cursor: pointer;
             font-size: 16px;
         }
-        button:hover {
-            background-color: #2844a7;
+        button:disabled {
+            background-color: #ccc;
+        }
+        audio {
+            display: block;
+            margin-top: 10px;
+        }
+        /* Timer styling */
+        .timer {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff0000;
         }
     </style>
 </head>
 <body>
-    <h1>Audio Recording Test</h1>
 
-    <!-- Question 1 -->
-    <div class="question">
-        <p>Question 1: Tell me 4 sentences about you.</p>
-        <button id="recordBtn1" onclick="startRecording(1)">Start Recording (30s)</button>
-        <audio id="audioPlayback1" controls></audio>
+    <h1>Mock YKI Test</h1>
+
+    <!-- Timer display -->
+    <div id="timer" class="timer">30s</div>
+
+    <!-- Writing Test Section -->
+    <div class="section">
+        <h2>Writing Section</h2>
+        <p>Write about your favorite hobby:</p>
+        <textarea id="writingAnswer" placeholder="Type your answer here..."></textarea>
+        <button onclick="saveWritingAnswer()">Save Answer</button>
     </div>
 
-    <!-- Question 2 -->
-    <div class="question">
-        <p>Question 2: Tell in 4 sentences about your favorite trip.</p>
-        <button id="recordBtn2" onclick="startRecording(2)">Start Recording (30s)</button>
-        <audio id="audioPlayback2" controls></audio>
+    <!-- Audio Test Section -->
+    <div class="section">
+        <h2>Speaking Section</h2>
+        
+        <!-- Question 1 -->
+        <div class="question">
+            <p>Question 1: Tell me 4 sentences about you.</p>
+            <button id="recordBtn1" onclick="startRecording(1)">Start Recording (30s)</button>
+            <audio id="audioPlayback1" controls></audio>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="question">
+            <p>Question 2: Tell in 4 sentences about your favorite trip.</p>
+            <button id="recordBtn2" onclick="startRecording(2)">Start Recording (30s)</button>
+            <audio id="audioPlayback2" controls></audio>
+        </div>
     </div>
 
     <script>
+        // Save and load the written answer using localStorage
+        const writingAnswerInput = document.getElementById('writingAnswer');
+
+        function saveWritingAnswer() {
+            const answer = writingAnswerInput.value;
+            localStorage.setItem('writingAnswer', answer);
+            alert('Your answer has been saved!');
+        }
+
+        function loadWritingAnswer() {
+            const savedAnswer = localStorage.getItem('writingAnswer');
+            if (savedAnswer) {
+                writingAnswerInput.value = savedAnswer;
+            }
+        }
+
+        // Call the function to load the saved answer when the page loads
+        window.onload = loadWritingAnswer;
+
+        // Audio Recording Logic
         let mediaRecorder;
         let recordedChunks = [];
         let currentQuestion = 0;
+        let countdownInterval;
+        const timerDisplay = document.getElementById('timer');
+        const recordingTime = 30; // 30 seconds for recording
 
         async function startRecording(questionNumber) {
             currentQuestion = questionNumber;
             recordedChunks = [];
             const recordButton = document.getElementById(`recordBtn${questionNumber}`);
             recordButton.disabled = true;
+
+            resetTimer(); // Reset the timer display
+            startTimer(); // Start countdown timer
 
             try {
                 // Request access to the microphone
@@ -95,41 +152,42 @@
                 setTimeout(() => {
                     if (mediaRecorder.state !== 'inactive') {
                         mediaRecorder.stop();
+                        stopTimer(); // Stop the timer once recording ends
                     }
-                }, 30000);
+                }, recordingTime * 1000);
 
             } catch (error) {
                 alert('Error accessing microphone: ' + error.message);
                 recordButton.disabled = false;
             }
         }
-    </script>
 
-    <h1>Mock YKI Test</h1>
-    <p>Question: Write about your favorite hobby.</p>
-    <textarea id="answer" placeholder="Type your answer here..."></textarea>
-    <button onclick="saveAnswer()">Save Answer</button>
+        // Countdown timer
+        function startTimer() {
+            let timeLeft = recordingTime;
+            timerDisplay.textContent = `${timeLeft}s`; // Display initial time
 
-    <script>
-        // Load saved answer from localStorage when the page loads
-        window.onload = function() {
-            loadAnswer();
-        };
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `${timeLeft}s`; // Update timer display
 
-        // Save the user's answer to localStorage
-        function saveAnswer() {
-            const answer = document.getElementById('answer').value;
-            localStorage.setItem('ykiAnswer', answer);
-            alert('Your answer has been saved!');
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    timerDisplay.textContent = 'Time\'s up!';
+                }
+            }, 1000);
         }
 
-        // Load the saved answer from localStorage and display it in the textarea
-        function loadAnswer() {
-            const savedAnswer = localStorage.getItem('ykiAnswer');
-            if (savedAnswer) {
-                document.getElementById('answer').value = savedAnswer;
-            }
+        function stopTimer() {
+            clearInterval(countdownInterval);
+            timerDisplay.textContent = '30s'; // Reset to default time after recording stops
+        }
+
+        function resetTimer() {
+            clearInterval(countdownInterval);
+            timerDisplay.textContent = '30s'; // Reset timer display
         }
     </script>
+
 </body>
 </html>
